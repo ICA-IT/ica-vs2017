@@ -1,0 +1,82 @@
+; Copyright (c) uib gmbh (www.uib.de)
+; This sourcecode is owned by uib gmbh
+; and published under the Terms of the General Public License.
+; credits: http://www.opsi.org/en/credits/
+
+[Actions]
+requiredWinstVersion >= "4.11.4.6"
+ScriptErrorMessages=off
+
+DefVar $UninstallProg32$
+DefVar $UninstallProgram32$
+DefVar $UninstallProgramOld32$
+DefVar $IniFile32$
+DefVar $UninstallProg64$
+DefVar $UninstallProgram64$
+DefVar $UninstallProgramOld64$
+DefVar $IniFile64$
+DefVar $IniCfgFile$
+
+DefVar $MsiId32$
+DefVar $MsiId64$
+
+DefVar $LogDir$
+DefVar $ExitCode$
+DefVar $ProductId$
+DefVar $InstallDir32$
+DefVar $InstallDir64$
+DefVar $LicenseRequired$
+DefVar $LicensePool$
+DefVar $INST_SystemType$
+DefVar $INST_architecture$
+DefVar $OLD_VERSION$
+DefVar $OLD_CREATOR_TAG$
+DefVar $OLD_RELEASE$
+
+DefVar $Reboot$
+DefVar $WinVer$
+DefVar $WinSysType$
+DefVar $WinTypeExt$
+
+DefVar $PackagePath$
+Set    $PackagePath$ = "%ScriptPath%"
+
+DefVar $PROP_productkey$
+DefVar $PROP_servershare$
+
+Set $LogDir$ = "%opsiLogDir%"
+set $PROP_productkey$ = GetProductProperty("productkey","")
+set $PROP_servershare$ = GetProductProperty("servershare","")
+
+
+Set $INST_SystemType$ = GetSystemType
+set $INST_architecture$ = GetProductProperty("inst_architecture","system specific")
+
+Set    $UninstallProg32$ = "Setup.exe"
+Set    $UninstallProg64$ = "Setup.exe"
+
+Set $LogDir$ = "%opsiLogDir%"
+
+; ----------------------------------------------------------------
+; - Please edit the following values                             -
+; ----------------------------------------------------------------
+Set $ProductId$       = "ica-vs2017"
+Set $InstallDir32$    = "%ProgramFiles32Dir%\Visual Studio 2017"
+Set $InstallDir64$    = "%ProgramFiles64Dir%\Visual Studio 2017"
+Set $LicenseRequired$ = "false"
+Set $LicensePool$     = "p_" + $ProductId$
+; ----------------------------------------------------------------
+
+Set $IniCfgFile$ = "%ScriptPath%\opsi-" + $ProductId$ + ".ini"
+
+comment "Show product picture"
+ShowBitmap "%ScriptPath%\" + $ProductId$ + ".png" $ProductId$
+
+Message "Uninstalling " + $ProductId$ + " ..."
+
+if FileExists("%ScriptPath%\delsub3264.opsiscript")
+	comment "Start uninstall sub section"
+	Sub "%ScriptPath%\delsub3264.opsiscript"
+endif
+
+

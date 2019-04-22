@@ -1,0 +1,268 @@
+; Copyright (c) uib gmbh (www.uib.de)
+; This sourcecode is owned by uib
+; and published under the Terms of the General Public License.
+; credits: http://www.opsi.org/en/credits/
+
+; add the folowing product property to your control file
+
+;[ProductProperty]
+;type: unicode
+;name: install_architecture
+;multivalue: False
+;editable: False
+;description: which architecture (32/64 bit) has to be installed
+;values: ["32 only", "64 only", "both", "system specific"]
+;default: ["system specific"]
+
+
+[Actions]
+requiredWinstVersion >= "4.11.4.6"
+ScriptErrorMessages=off
+
+DefVar $UninstallProgram32$
+DefVar $UninstallProgramOld32$
+DefVar $IniFile32$
+DefVar $UninstallProgram64$
+DefVar $UninstallProgramOld64$
+DefVar $IniFile64$
+DefVar $IniCfgFile$
+
+DefVar $MsiId32$
+DefVar $MsiId64$
+
+DefVar $LogDir$
+DefVar $ProductId$  
+DefVar $MinimumSpace$
+DefVar $InstallDir32$
+DefVar $InstallDir64$
+DefVar $ExitCode$
+DefVar $LicenseRequired$
+DefVar $LicenseKey$
+DefVar $LicensePool$
+DefVar $INST_SystemType$
+DefVar $INST_architecture$
+DefVar $OLD_VERSION$
+DefVar $OLD_CREATOR_TAG$
+DefVar $OLD_RELEASE$
+DefVar $PROP_productkey$
+DefVar $PROP_sharename$
+DefVar $PROP_sharedir$
+DefVar $PROP_shareUN$
+DefVar $PROP_sharePW$
+
+DefVar $Reboot$
+DefVar $WinVer$
+DefVar $WinSysType$
+DefVar $WinTypeExt$
+
+Set $LogDir$ = "%opsiLogDir%"
+set $PROP_productkey$ = GetProductProperty("productkey","")
+set $PROP_sharename$ = GetProductProperty("sharename","\\vboxsrv\dad")
+set $PROP_sharedir$ = GetProductProperty("sharedir","\VS17Layout")
+set $PROP_shareUN$ = GetProductProperty("shareUN","")
+set $PROP_sharePW$ = GetProductProperty("sharePW","")
+
+
+Set $WinVer$ = GetMsVersionInfo
+Set $WinSysType$ = GetSystemType
+
+Set $INST_SystemType$ = GetSystemType
+set $INST_architecture$ = GetProductProperty("inst_architecture","system specific")
+
+DefVar $PackagePath$
+Set    $PackagePath$ = "%ScriptPath%"
+
+DefVar $Install32Exe$
+;Set    $Install32Exe$ = $PackagePath$ + "\X86\vs_community__1092604012.1539905546.exe"
+Set    $Install32Exe$ = "v:" + $PROP_sharedir$ + "\vs_community__1092604012.1539905546.exe"
+DefVar $Install64Exe$
+;Set    $Install64Exe$ = $PackagePath$ + "\X86_64\vs_community__1092604012.1539905546.exe"
+Set    $Install64Exe$ = "v:" + $PROP_sharedir$ + "\vs_community__1092604012.1539905546.exe"
+
+; set uninstall program
+DefVar $UninstallProg32$
+Set    $UninstallProg32$ = "Setup.exe"
+DefVar $UninstallProg64$
+Set    $UninstallProg64$ = "Setup.exe"
+
+Set $LogDir$ = "%opsiLogDir%"
+
+; ----------------------------------------------------------------
+; - Please edit the following values                             -
+; ----------------------------------------------------------------
+;$ProductId$ should be the name of the product in opsi
+; therefore please: only lower letters, no umlauts, 
+; no white space use '-' as a seperator
+Set $ProductId$       = "ica-vs2017"
+Set $MinimumSpace$    = "10 GB"
+; the path were we find the product after the installation
+Set $InstallDir32$      = "%ProgramFiles32Dir%\Visual Studio 2017"
+Set $InstallDir64$      = "%ProgramFiles64Dir%\Visual Studio 2017"
+Set $LicenseRequired$ = "false"
+Set $LicensePool$     = "p_" + $ProductId$
+; ----------------------------------------------------------------
+
+Set $WinTypeExt$ = "x64"
+if ($WinSysType$ = "x86 System")
+    Set $WinTypeExt$ = "x86"
+endif   
+
+if CompareDotSeparatedNumbers($WinVer$,">","6.1")
+   LogError $ProductId$ + " requires Windows version 6.1 or below. This system is reporting version " + $WinVer$ + " ("+ $WinSysType$ + ")"
+   LogError "You should use Windows Defender instead..."
+   Message "Error: No need to install " + $ProductId$ + " on Windows " + $WinVer$ + " systems... "
+   isFatalError "Wrong product"
+   ; Stop process and set installation status to failed
+endif
+
+Set $IniCfgFile$ = "%ScriptPath%\opsi-" + $ProductId$ + ".ini"
+
+if not(HasMinimumSpace ("%SystemDrive%", $MinimumSpace$))
+	LogError "Not enough space on %SystemDrive%, " + $MinimumSpace$ + " on drive %SystemDrive% needed for " + $ProductId$
+	isFatalError
+	; Stop process and set installation status to failed
+else
+	comment "Show product picture"
+	ShowBitmap "%ScriptPath%\" + $ProductId$ + ".png" $ProductId$
+	
+	if FileExists("%ScriptPath%\delsub3264.opsiscript")
+		comment "Start uninstall sub section"
+		Sub "%ScriptPath%\delsub3264.opsiscript"
+	endif
+
+	comment "installing"
+
+	if (($INST_SystemType$ = "x86 System") and ($INST_architecture$ = "system specific")) or ($INST_architecture$ = "both") or ($INST_architecture$ = "32 only")
+		Message "Installing " + $ProductId$ + " 32 Bit..."
+		comment "Start setup program"
+		comment "Connecting share"
+        DOSInAnIconShare1
+		ChangeDirectory "%SCRIPTPATH%"
+		Winbatch_install_32
+		Sub_check_exitcode
+		comment "Dis-connecting share"
+        DOSInAnIconShare2		
+		comment "Copy files"
+		Files_install_32 /32Bit
+		comment "Patch Registry"
+		Registry_install /32Bit
+		comment "Create shortcuts"
+		LinkFolder_install
+	endif
+
+	if ($INST_SystemType$ = "64 Bit System") and (($INST_architecture$ = "system specific") or ($INST_architecture$ = "both") or ($INST_architecture$ = "64 only"))
+		Message "Installing " + $ProductId$ + " 64 Bit..."
+		comment "Start setup program"
+		comment "Connecting share"
+        DOSInAnIconShare1		
+		ChangeDirectory "%SCRIPTPATH%"
+		Winbatch_install_64
+		Sub_check_exitcode
+		comment "Dis-connecting share"
+        DOSInAnIconShare2		
+		comment "Copy files"
+		Files_install_64 /64Bit
+		comment "Patch Registry"
+		Registry_install /64Bit
+		comment "Create shortcuts"
+		LinkFolder_install
+	endif
+	
+endif
+
+[DOSInAnIconShare1]
+; Attach visual studio install cache
+net use v: $PROP_sharename$ $PROP_sharePW$ /persistent:no /user:$PROP_shareUN$ 
+
+[DOSInAnIconShare2]
+; Release visual studio install cache
+c:
+net use v: /delete
+
+[Winbatch_install_32]
+; imstall 32 bit version
+"$Install32Exe$" --add Microsoft.VisualStudio.Workload.NativeDesktop --includeRecommended --lang en-US
+
+[Files_install_32]
+; copy 32 bit setup file into the installation directory:
+copy "$IniCfgFile$" "$InstallDir32$"
+
+[Winbatch_install_64]
+; install 64 bit version
+"$Install64Exe$" --add Microsoft.VisualStudio.Workload.NativeDesktop --includeRecommended --lang en-US
+
+[Files_install_64]
+; copy 64 bit setup file  into the installation directory:
+copy "$IniCfgFile$" "$InstallDir64$"
+
+[Registry_install]
+; Example of setting some values of an registry key:
+;
+; openkey [HKEY_LOCAL_MACHINE\Software\$ProductId$]
+; set "name1" = "some string value"
+; set "name2" = REG_DWORD:0001
+; set "name3" = REG_BINARY:00 af 99 cd
+
+[LinkFolder_install]
+; Example of deleting a folder from AllUsers startmenu:
+;
+; set_basefolder common_programs
+; delete_subfolder $ProductId$
+;
+; Example of creating an shortcut to the installed exe in AllUsers startmenu:
+;
+; set_basefolder common_programs
+; set_subfolder $ProductId$
+;
+; set_link
+; 	name: $ProductId$
+; 	target: <path to the program>
+; 	parameters:
+; 	working_dir: $InstallDir$
+; 	icon_file:
+; 	icon_index:
+; end_link
+;
+; Example of creating an shortcut to the installed exe on AllUsers desktop:
+;
+; set_basefolder common_desktopdirectory
+; set_subfolder ""
+;
+; set_link
+; 	name: $ProductId$
+; 	target: <path to the program>
+; 	parameters: <some_param>
+; 	working_dir: $InstallDir$
+; 	icon_file: <path to icon file>
+; 	icon_index: 2
+; end_link
+
+[Sub_check_exitcode]
+comment "Test for installation success via exit code"
+set $ExitCode$ = getLastExitCode
+; informations to exit codes see
+; http://msdn.microsoft.com/en-us/library/aa372835(VS.85).aspx
+; http://msdn.microsoft.com/en-us/library/aa368542.aspx
+if ($ExitCode$ = "0")
+	comment "Looks good: setup program gives exitcode zero"
+else
+	comment "Setup program gives a exitcode unequal zero: " + $ExitCode$
+	if ($ExitCode$ = "1605")
+		comment "ERROR_UNKNOWN_PRODUCT	1605	This action is only valid for products that are currently installed."
+		comment "Uninstall of a not installed product failed - no problem"
+	else
+		if ($ExitCode$ = "1641")
+			comment "looks good: setup program gives exitcode 1641"
+			comment "ERROR_SUCCESS_REBOOT_INITIATED	1641	The installer has initiated a restart. This message is indicative of a success."
+		else
+			if ($ExitCode$ = "3010")
+				comment "looks good: setup program gives exitcode 3010"
+				comment "ERROR_SUCCESS_REBOOT_REQUIRED	3010	A restart is required to complete the install. This message is indicative of a success."
+			else
+				logError "Fatal: Setup program gives an unknown exitcode unequal zero: " + $ExitCode$
+				isFatalError
+			endif
+		endif
+	endif
+endif
+

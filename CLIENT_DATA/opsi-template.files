@@ -1,0 +1,22 @@
+d 'use_include' 0 
+f 'use_include/uninstall_short32.opsiscript' 1885 266c32807b4398221eaab92661c00276
+f 'use_include/delsub_short32.opsiscript' 2034 6d8ec32f02ad9be71c61f3e03700b434
+f 'use_include/setup_short32.opsiscript' 5136 743f27bca3af487be8e510e7ef50313d
+f 'opsi-template.png' 16993 ce3780c6eae12d87b10f7402f1ee00cf
+d '3264' 0 
+f '3264/setup3264.opsiscript' 10649 0c4b9e366a574292a099ae22a433ed2b
+f '3264/delsub3264.opsiscript' 5215 a27978fbc551c260fbdafeacf3d1209a
+f '3264/uninstall3264.opsiscript' 2209 0e98c4a7830f56c7647944b66bf717e3
+f 'delsub32.opsiscript' 3321 a3d3fc00cb85cd977002e5db53c02410
+f 'setup32.opsiscript' 7933 8131d579b1b31e2446b7ac81afd33589
+d '32advanced' 0 
+f '32advanced/delsub32.opsiscript' 3767 52075cb7555ca6e00d5437a38a8dccac
+f '32advanced/setup32.opsiscript' 7682 a3e1dd4d9e2d4ba236e49934726c3405
+f '32advanced/uninstall32.opsiscript' 1948 b1eac4f30ca9d4990d47872c31c50273
+d '64' 0 
+f '64/setup64.opsiscript' 7595 2415b7c7a14ec1da19c95141e3812020
+f '64/uninstall64.opsiscript' 1875 a5eb71737213221435b73d0bcf9ae0a5
+f '64/delsub64.opsiscript' 3322 1afff95e572b765cdf2874d1adfb909e
+f 'login.opsiscript' 736 4a654d1c14bf1bc09923ae7c4d2ccc4c
+d 'org' 0 
+f 'uninstall32.opsiscript' 1873 8e65b6b39b0e77acef34851782b51db6
